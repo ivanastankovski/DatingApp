@@ -11,6 +11,6 @@ namespace DatingApp.API.Data
         // convention pluralise the names of the entities value -> values(to be table name)      
         public DbSet<Value> Values { get; set; }
         public DbSet<User> Users { get; set; }
-
+        public DbSet<Photo> Photos { get; set; }
     }
 }
