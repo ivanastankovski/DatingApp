@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using AutoMapper;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
+using DatingApp.API.Helpers;
+using Newtonsoft.Json.Serialization;
+
 
 namespace DatingApp.API
 {
@@ -32,11 +38,30 @@ namespace DatingApp.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddMvc().AddJsonOptions(o => {
-                o.JsonSerializerOptions.PropertyNamingPolicy = null;
-                o.JsonSerializerOptions.DictionaryKeyPolicy = null;
-                });
-            services.AddCors();
+            // services.AddMvc().AddJsonOptions(o => {
+            //     o.JsonSerializerOptions.PropertyNamingPolicy = null;
+            //     o.JsonSerializerOptions.DictionaryKeyPolicy = null;
+            //     });
+                // JSON Serializer
+            services.AddControllers()
+            .AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+            // services.AddControllersWithViews()
+            //     .AddNewtonsoftJson(options => 
+            //         options.SerializerSettings
+            //         .ReferenceLoopHandling=Newtonsoft
+            //         .Json.ReferenceLoopHandling.Ignore)
+            //     .AddNewtonsoftJson(options => 
+            //         options.SerializerSettings
+            //         .ContractResolver=new DefaultContractResolver());
+
+                
+            //services.AddCors();
+            services.AddCors(c =>
+            {
+                c.AddPolicy("AllowOrigin", options =>
+                options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            });
+
             services.AddAutoMapper();
             services.AddTransient<Seed>();
             services.AddControllers();
@@ -63,6 +88,21 @@ namespace DatingApp.API
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseExceptionHandler(builder => {
+                    builder.Run(async context => {
+                        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+                        var error = context.Features.Get<IExceptionHandlerFeature>();
+                        if (error != null)
+                        {
+                            context.Response.AddApplicationError(error.Error.Message);
+                            await context.Response.WriteAsync(error.Error.Message);
+                        }
+                    });
+                });
+            }
 
             app.UseHttpsRedirection();
 
@@ -70,7 +110,9 @@ namespace DatingApp.API
 
             //seeder.SeedUsers();
 
-            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            //app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
 
             app.UseAuthentication();
             
