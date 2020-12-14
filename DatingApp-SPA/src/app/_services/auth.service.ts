@@ -1,3 +1,4 @@
+import { User } from 'src/app/_models/user';
 import { environment } from './../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
@@ -28,8 +29,8 @@ login(model: any) {
     );
 }
 
-register(model: any) {
-  return this.http.post(this.baseUrl + 'register', model);
+register(user: User) {
+  return this.http.post(this.baseUrl + 'register', user);
 }
 
 loggedIn() {
