@@ -62,6 +62,9 @@ namespace DatingApp.API
                 options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             });
 
+            // Cloudinary
+            services.Configure<CloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
+
             services.AddAutoMapper();
             services.AddTransient<Seed>();
             services.AddControllers();
